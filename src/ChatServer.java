@@ -18,15 +18,16 @@ public class ChatServer {
         open();
         boolean done = false;
         while (!done)
-        {  try
+        //{  try
         {  String line = streamIn.readUTF();
             System.out.println(line);
             done = line.equals(".bye");
         }
-        catch(IOException ioe)
-        {  done = true;
-        }
-        }
+        //catch(IOException ioe)
+        //{   System.out.println("why u here?");
+        //    done = true;
+        //}
+        //}
         close();
     }
     catch(IOException ioe)
@@ -39,6 +40,7 @@ public class ChatServer {
     public void close() throws IOException
     {  if (socket != null)    socket.close();
         if (streamIn != null)  streamIn.close();
+        System.out.println("Closing server...");
     }
     public static void main(String args[])
     {  ChatServer server = null;
