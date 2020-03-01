@@ -6,7 +6,7 @@ public class ChatClient
     private DataInputStream  console   = null;
     private DataOutputStream streamOut = null;
 
-    public ChatClient(InetAddress serverName, int serverPort)
+    public ChatClient(InetAddress serverName, int serverPort, String message)
     {  System.out.println("Establishing connection. Please wait ...");
         try
         {  socket = new Socket(serverName, serverPort);
@@ -19,10 +19,8 @@ public class ChatClient
         catch(IOException ioe)
         {  System.out.println("Unexpected exception: " + ioe.getMessage());
         }
-        String line = "";
         try
-        {  line = console.readLine();
-            streamOut.writeUTF(line);
+        {   streamOut.writeUTF(message);
             streamOut.flush();
         }
         catch(IOException ioe)
@@ -47,6 +45,6 @@ public class ChatClient
     }
     public static void main(String args[]) throws UnknownHostException {
         ChatClient client = null;
-        client = new ChatClient(InetAddress.getLocalHost(), 9876);
+        client = new ChatClient(InetAddress.getLocalHost(), 1, "hello");
     }
 }

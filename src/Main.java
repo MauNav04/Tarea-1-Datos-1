@@ -1,119 +1,178 @@
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.layout.*;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
+import java.io.IOException;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.UnknownHostException;
 import java.util.*;
 
 public class Main extends Application {
 
-    BorderPane mainPane;
-    VBox leftSide;
-    Pane centralPane;
+    Pane mainPane;
+    VBox centralPane;
+
     ChatServer server;
+    ChatClient client;
+
+
     LinkedList avaList= new LinkedList();
 
-    class ThreadDemo implements Runnable {
+    public class SubThread implements Runnable {
         Thread t;
-        ThreadDemo() {
+        SubThread() {
             t = new Thread(this, "Thread");
-            System.out.println("Child thread: " + t);
             t.start();
         }
+
         public void run() {
-            try {
-                System.out.println("Child Thread");
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                System.out.println("The child thread is interrupted.");
-            }
-            System.out.println("Exiting the child thread");
+            int port = findPort();
+            server = new ChatServer(port);
         }
-    }
-    public class Thread {
-        public static void main(String args[]) {
-            new ThreadDemo();
-            try {
-                System.out.println("Main Thread");
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                System.out.println("The Main thread is interrupted");
+
+        public int findPort(){
+            boolean portFree = false;
+            int portNr = 0;
+            while(!portFree){
+                try (var ignored = new ServerSocket(portNr)) {
+                    portFree = true;
+                } catch (IOException e) {
+                    System.out.println("IOException: Finding another port...");
+
+                portFree = true;
+                }
+
             }
-            System.out.println("Exiting the Main thread");
+
         }
     }
 
-    public void initServer(){
-        int port = findPort();
-        ChatServer server = null;
-        server = new ChatServer(port);
+    public void send(String port, String message)throws UnknownHostException {
+        boolean Bport = checkPort(port);
+        boolean Bmessage = checkMessage(message);
+
+        if((Bport) && (Bmessage)){
+            int i = Integer.parseInt(port);
+            client = new ChatClient(InetAddress.getLocalHost(), i, message);
+        }
     }
 
-    public int findPort(){
-        int port = 0;
-        for(int i = 1; i<=9999; i++){
-            if(!avaList.contains(i)) {
-                avaList.add(i);
-                port=i;
-                break;
+
+    public boolean checkPort (String port){
+        if(port != ""){
+            int length = port.length();
+            if(length < 5){
+                return true;
             }
         }
-        return port;
+        return false;
+    }
+
+    public boolean checkMessage (String message){
+        if(message != ""){
+            return true;
+        }
+        return false;
     }
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        initServer();
+        new SubThread();
 
         primaryStage.setTitle("Socket Chat");
         primaryStage.setWidth(800);
-        primaryStage.setHeight(700);
+        primaryStage.setHeight(650);
         primaryStage.setResizable(false);
         primaryStage.getIcons().add(new Image("Images/logo.png"));
 
-        mainPane = new BorderPane();
-        leftSide = new VBox(10);
-        leftSide.setPrefSize(250,400);
-        leftSide.setMaxWidth(Region.USE_PREF_SIZE);
-        leftSide.setMaxHeight(Region.USE_PREF_SIZE);
-        leftSide.setBackground(Background.EMPTY);
+        mainPane = new Pane();
+        mainPane.setPrefSize(800,650);
+
+        centralPane = new VBox(10);
+        centralPane.setPrefSize(800,560);
+        centralPane.setMaxWidth(Region.USE_PREF_SIZE);
+        centralPane.setMaxHeight(Region.USE_PREF_SIZE);
+        centralPane.setBackground(Background.EMPTY);
         String style = "-fx-background-color: rgba(255, 255, 255, 0.5);";
-        leftSide.setStyle(style);
-        mainPane.setLeft(leftSide);
+        centralPane.setStyle(style);
+        centralPane.setLayoutX(0);
+        centralPane.setLayoutY(0);
+
+        //SCENE 2
+        Label portLabel = new Label("Puerto:");
+        portLabel.setPrefSize(170,58);
+        portLabel.setFont(new Font("System",30));
+        TextField portTextField = new TextField();
+        portTextField.setPrefSize(478,66);
+        HBox topHbox = new HBox();
+        topHbox.setPrefSize(800,66);
+        topHbox.getChildren().addAll(portLabel,portTextField);
+
+        Pane fillingPane = new Pane();
+        fillingPane.setPrefSize(800,103);
+
+        TextField messageTextField = new TextField();
+        messageTextField.setFont(new Font("System",18));
+        messageTextField.setPromptText("Escriba su mensaje aqui");
+        messageTextField.setAlignment(Pos.TOP_LEFT);
+        messageTextField.setPrefSize(691,389);
+
+        Pane fillingPane2 = new Pane();
+        fillingPane2.setPrefSize(671,98);
+        Button sendButton = new Button("Enviar");
+        sendButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                try {
+                    send(portTextField.getText(), messageTextField.getText());
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        sendButton.setFont(new Font("System",20));
+        sendButton.setPrefSize(103,60);
+        HBox bottomHbox = new HBox();
+        bottomHbox.setPrefSize(200,100);
+        bottomHbox.getChildren().addAll(fillingPane2,sendButton);
 
 
-        centralPane = new Pane();
-        TextField messageField = new TextField();
-        messageField.setPromptText("Write here");
-        messageField.setPrefSize(281,25);
-        messageField.setLayoutX(28);
-        messageField.setLayoutY(510);
+        VBox layout1 = new VBox();
+        layout1.setPrefSize(800,650);
+        layout1.getChildren().addAll(topHbox,fillingPane,messageTextField,bottomHbox);
+        Scene scene2 = new Scene(layout1,800,650);
+        //FIN DE SCENE 2
 
-        Button sendBtn= new Button("Send");
+        Button sendBtn= new Button("Nuevo Mensaje");
+        sendBtn.setPrefSize(112,46);
         sendBtn.setLayoutX(333);
         sendBtn.setLayoutY(510);
         sendBtn.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-
+                primaryStage.setScene(scene2);
             }
         });
-        centralPane.getChildren().addAll(sendBtn,messageField);
-        mainPane.setCenter(centralPane);
-        Scene mainScene = new Scene (mainPane,800,700);
+
+        mainPane.getChildren().addAll(centralPane,sendBtn);
+        Scene mainScene = new Scene (mainPane,344,570);
+
 
         primaryStage.setScene(mainScene);
 
         primaryStage.show();
-
     }
-
-
 
     public static void main(String args[]){
         launch(args);
