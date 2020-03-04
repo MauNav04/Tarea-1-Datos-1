@@ -45,6 +45,6 @@ public class ChatClient
     }
     public static void main(String args[]) throws UnknownHostException {
         ChatClient client = null;
-        client = new ChatClient(InetAddress.getLocalHost(), 1, "hello");
+        client = new ChatClient(InetAddress.getLocalHost(), 53871, "hello");
     }
 }

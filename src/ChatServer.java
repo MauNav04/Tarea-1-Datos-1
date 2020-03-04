@@ -29,8 +29,7 @@ public class ChatServer {
         //}
         //}
         close();
-    }
-    catch(IOException ioe)
+    } catch(IOException ioe)
     {  System.out.println(ioe);
     }
     }
@@ -44,6 +43,6 @@ public class ChatServer {
     }
     public static void main(String args[])
     {  ChatServer server = null;
-        server = new ChatServer(9876);
+        server = new ChatServer(0);
     }
 }

@@ -12,7 +12,7 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.net.DatagramSocket;
+import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.UnknownHostException;
@@ -21,41 +21,35 @@ import java.util.*;
 public class Main extends Application {
 
     Pane mainPane;
+    Scene menuScene;
+    Scene messageScene;
     VBox centralPane;
+    int hostingPort;
 
     ChatServer server;
     ChatClient client;
 
 
-    LinkedList avaList= new LinkedList();
-
-    public class SubThread implements Runnable {
+    public class SocketHosting implements Runnable {
         Thread t;
-        SubThread() {
+        SocketHosting() {
             t = new Thread(this, "Thread");
             t.start();
         }
 
-        public void run() {
-            int port = findPort();
+        public void run(){
+
+            Scanner scan = new Scanner(System.in);
+
+
+            System.out.print("Select a port to host the app : ");
+            String output = scan.nextLine();
+            int port = Integer.parseInt(output);
+
+            hostingPort = port ;
             server = new ChatServer(port);
         }
 
-        public int findPort(){
-            boolean portFree = false;
-            int portNr = 0;
-            while(!portFree){
-                try (var ignored = new ServerSocket(portNr)) {
-                    portFree = true;
-                } catch (IOException e) {
-                    System.out.println("IOException: Finding another port...");
-
-                portFree = true;
-                }
-
-            }
-
-        }
     }
 
     public void send(String port, String message)throws UnknownHostException {
@@ -88,7 +82,7 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        new SubThread();
+        new SocketHosting();
 
         primaryStage.setTitle("Socket Chat");
         primaryStage.setWidth(800);
@@ -139,6 +133,8 @@ public class Main extends Application {
                 } catch (UnknownHostException e) {
                     e.printStackTrace();
                 }
+                primaryStage.setScene(menuScene);
+                //centralPane.getChildren().add();
             }
         });
         sendButton.setFont(new Font("System",20));
@@ -152,6 +148,7 @@ public class Main extends Application {
         layout1.setPrefSize(800,650);
         layout1.getChildren().addAll(topHbox,fillingPane,messageTextField,bottomHbox);
         Scene scene2 = new Scene(layout1,800,650);
+        messageScene = scene2;
         //FIN DE SCENE 2
 
         Button sendBtn= new Button("Nuevo Mensaje");
@@ -161,12 +158,13 @@ public class Main extends Application {
         sendBtn.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                primaryStage.setScene(scene2);
+                primaryStage.setScene(messageScene);
             }
         });
 
         mainPane.getChildren().addAll(centralPane,sendBtn);
         Scene mainScene = new Scene (mainPane,344,570);
+        menuScene = mainScene;
 
 
         primaryStage.setScene(mainScene);
